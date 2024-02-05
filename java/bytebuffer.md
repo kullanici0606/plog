@@ -124,7 +124,7 @@ ByteBuffer buf = ByteBuffer.allocate(bufferSize);
 while(isRunning()) {
     byte [] data = readFromSomewhere();
     buf.put(data);
-    // buffer is full, let's pass it to consumer and start with a fresh one
+    // buffer is full, let's pass it to consumer and start with a fresh one*
     if(buf.remaining() < THRESHOLD) {
         queue.put(buf);
         buf = ByteBuffer.allocate(bufferSize);
@@ -143,6 +143,7 @@ while(isRunning()) {
     process(buf);
 }
 ```
+(* normally, it is better to check for available room (i.e `buf.remaining() - data.length < 0`), however checking for 'threshold' made my example easier to show my point).
 
 Here we want consumer to continue processing until it receives exit message. However, when "equals" is used, consumer will exit if it receives a ByteBuffer with no remaining elements exists:
 ```java
