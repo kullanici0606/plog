@@ -2,13 +2,13 @@
 
 One day, you have been tasked to write a UDP server.
 
-Unlike TCP, which is a session oriented protocol where you can have one thread per connection, UDP cannot have a per connection threads.
-However, you know the best practices to write a UDP server in Java which is to have a thread that reads packets from UDP socket and have other threads to process the packet.
+Unlike TCP, which is a session oriented protocol where you can have one thread per connection, UDP cannot have per connection thread architecture.
+However, you know the best practices to write a UDP server in Java which is to have a thread that reads packets from UDP socket and have other threads to process them.
 
 
-If you try to both read from socket and process the UDP packet in the same thread, then packet drops may occur when the processing speed and packet arrival speed mismatch.
+If you try to both read from the socket and process the UDP packet in the same thread, then packet drops may occur when packet arrival speed exceeds the processing speed.
 
-So you have the textbook definition of producer consumer problem. Since your task requires you to write a high performance UDP server, you decided to use [ConcurrentLinkedQueue](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentLinkedQueue.html) because it is an efficient non-blocking collection.
+So you have the textbook definition of producer-consumer problem. Since your task requires you to write a high performance UDP server, you decided to use [ConcurrentLinkedQueue](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentLinkedQueue.html) because it is an efficient non-blocking collection:
 
 ```java
 
@@ -32,10 +32,10 @@ while(isRunning()) {
 }
 ```
 
-Everything was nice until one day your UDP server received so many UDP packets that consumers couldn't catch, therefore queue has been filled with packets and your server died with `OutOfMemoryError`
+Everything was nice until one day your UDP server received so many UDP packets that consumers couldn't catch, therefore queue has been filled with packets and your server died with `OutOfMemoryError`.
 
-This was not nice at all. You need to fix this immediately. 
-Since this is a UDP server, and the nature of the UDP includes packet drops, you thought that it is safe to ignore packets if queue becomes 'full' i.e size of the queue is bigger than some threshold value:
+This was not nice at all. You need to fix it immediately. 
+Since this is a UDP server, and the nature of the UDP includes packet drops, you thought that it is safe to ignore packets if queue becomes "full" i.e size of the queue is bigger than some threshold value:
 ```java
 private static final int THRESHOLD = 10_000_000;
 
@@ -63,10 +63,10 @@ while(isRunning()) {
 ```
 
 You are now confident that no `OutOfMemoryError`s will occur.
-You deployed the new version but suddenly throughput of the server dropped, you started to see a lot of packet drops.
+You deployed the new version but suddenly throughput of the server has dropped, you started to see a lot of packet drops.
 
-How? What is going on? You just added a simple size check to the code, everything else is same.
-You quickly rolled back to old version and started to some benchmarks using [JMH](https://github.com/openjdk/jmh):
+How? What is going on? You just added a simple size check to the code, everything else is the same.
+You quickly rolled back to old version and started to do some benchmarks using [JMH](https://github.com/openjdk/jmh):
 
 ```
 Benchmark                          Mode  Cnt        Score       Error  Units
@@ -121,7 +121,7 @@ Benchmark                          Mode  Cnt         Score        Error  Units
 MyBenchmark.abqOffer               thrpt   10  42262008,442 ± 812286,214  ops/s
 ```
 
-We have our nice throughput values back, actually they are higher, though we need to rune some more benchmarks to make sure that this is correct.
+We have our nice throughput values back, actually they are higher, though we need to run some more benchmarks to make sure that this is correct.
 Most probably this is because no or little allocation is needed when `offer` is called in `ArrayBlockingQueue`, however `ConcurrentLinkedQueue` needs to allocate a `Node` per `offer`.
 
 This is also another disadvantage of `ConcurrentLinkedQueue`, it creates a lot of garbage.
